@@ -517,6 +517,49 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
 .ctr .link.fl svg{width:15px;height:15px;flex:none}
 #catSheet .curfile{margin-bottom:6px}
 .ctr .acts{gap:4px 14px}
+.tgbar{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap}
+.tgbar .grow{flex:1 1 0}
+#tg-q{flex:0 1 300px;width:auto;min-height:44px}
+.tg-grp{display:flex;flex-direction:column;gap:8px}
+.tg-grp + .tg-grp{margin-top:8px}
+.tg-gh{margin:4px 0 0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tg-gh span{display:inline-block;min-width:22px;padding:1px 7px;margin-left:4px;border-radius:999px;background:var(--stone);color:var(--ink2);text-align:center;letter-spacing:0}
+.tg-gh.late{color:var(--danger)} .tg-gh.late span{background:var(--danger-tint);color:var(--danger)}
+.tgr.c{display:block;padding:0;overflow:hidden}
+.tgr.c.late,.tgr.c.today,.tgr.c.soon{padding-left:0}
+.tgr.c.closed{background:#F7FAF8}
+.tgr.c.closed .tg-t,.tgr.c.done .tg-t{color:var(--muted)}
+.tg-line{display:flex;align-items:center;gap:8px;padding-right:12px}
+.tg-head{appearance:none;flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:10px 6px 10px 12px;border:0;background:none;text-align:left;color:inherit;font:inherit;border-radius:12px}
+.tg-head:hover .tg-t{color:var(--accent-dark)}
+.tg-head .chev{flex:none;color:var(--faint);transition:transform .15s}
+.tgr.open .tg-head .chev{transform:rotate(180deg)}
+.tg-date.sm{width:44px;padding:4px 0 3px;border-radius:9px}
+.tg-date.sm b{font-size:16px}
+.tg-date.sm span{font-size:10px}
+.tgr.closed .tg-date{background:var(--time-bg);color:var(--time-fg)}
+.tg-hm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.tg-t{font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tgr.open .tg-t{white-space:normal;overflow-wrap:anywhere}
+.tg-hm .meta{gap:2px 10px}
+.tg-hm .meta .cnt{font-variant-numeric:tabular-nums}
+.tg-body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px 68px}
+.tgr.pin .tg-body{padding-left:56px}
+.tg-acts{display:flex;flex-wrap:wrap;gap:2px 14px;align-items:center}
+.tg-acts .link{padding:4px 0;min-height:32px}
+.tg-pin{flex:none;width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:#FCEFD9;color:#8A4B06}
+.panel.pins{border-left:4px solid #D98A1C}
+.dpins{display:flex;flex-direction:column;gap:6px}
+.dpin{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--ink2);padding:8px 10px;border-radius:10px;background:#FDF6EA}
+.dpin svg{flex:none;color:#8A4B06;margin-top:1px}
+.dpin span{min-width:0;overflow-wrap:anywhere}
+@media (max-width:820px){
+  .tg-body{padding-left:14px}
+  .tgr.pin .tg-body{padding-left:14px}
+  #tg-q{flex:1 1 100%}
+  .tg-line{flex-wrap:wrap;padding:0 12px 8px 0}
+  .tg-line .donebtn{margin-left:68px}
+}
 .pick{border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:var(--white)}
 .pick-top{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--ivory);border-bottom:1px solid var(--line)}
 .pick-top input{flex:1 1 200px;width:auto;min-height:40px}
@@ -1015,7 +1058,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     holYear: Number(startDate.slice(0, 4)), holForm: { date: '', end: '', name: '', type: 'Cuti Umum' }, holEditing: null, holErr: '', holBusy: false, holConfirm: null,
     catPeriod: startDate.slice(0, 7), catPerson: '', cf: null, catBusy: false, catConfirm: null, notaDraft: {}, pdfKind: 'rekod',
     gaji: '', akses: 'PERLU', gajiErr: '', gajiBusy: false, aksesRingkas: null, gajiRes: null,
-    tgFilter: 'ALL', tf: null, tgBusy: false, tgConfirm: null, tgDoneBusy: ''
+    tgFilter: 'AKTIF', tgQ: '', tgMineOnly: false, tgOpen: {}, tf: null, tgBusy: false, tgConfirm: null, tgDoneBusy: ''
   };
   // Nombor gaji disimpan pada peranti ini bersama nama pemiliknya; jika nama bertukar, ia dibuang.
   function gajiFor(name) {
@@ -1144,7 +1187,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
       .map(function (n) { return { name: str(n.name), ref: str(n.ref), month: n.month, note: str(n.note) }; });
     TGS = ((d && d.tugasan) || []).filter(function (x) { return x && typeof x.id === 'string' && TTYPES[x.type] && x.title && (x.type !== 'TUGASAN' || ISO.test(x.due || '')); }).map(function (x) {
       return { id: x.id, type: x.type, title: str(x.title), detail: str(x.detail), link: /^https?:\/\//i.test(str(x.link)) ? x.link : '',
-        due: ISO.test(x.due || '') ? x.due : '', time: /^\d{2}:\d{2}$/.test(x.time || '') ? x.time : '', target: str(x.target) || 'SEMUA', people: Array.isArray(x.people) ? x.people.map(str).filter(Boolean) : [],
+        due: ISO.test(x.due || '') ? x.due : '', time: /^\d{2}:\d{2}$/.test(x.time || '') ? x.time : '', closed: x.closed && x.closed.at ? { at: str(x.closed.at), by: str(x.closed.by) } : null, target: str(x.target) || 'SEMUA', people: Array.isArray(x.people) ? x.people.map(str).filter(Boolean) : [],
         by: str(x.by), fileName: str(x.fileName), fileId: str(x.fileId), created: str(x.created) };
     });
     SIAP = {};
@@ -2264,10 +2307,13 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   }
 
   // ---------- Tugasan & Pautan (dikongsi dalam jabatan; sesiapa boleh tambah, pengirim atau penyelaras boleh ubah)
-  var TTYPES = { TUGASAN: { label: 'Tugasan', hint: 'Ada tarikh akhir. Guru boleh tanda siap.' }, PAUTAN: { label: 'Pautan', hint: 'Link yang selalu dikongsi: borang, portal, folder Drive.' }, FAIL: { label: 'Fail', hint: 'Templat, surat atau borang untuk dimuat turun.' } };
+  var TTYPES = { TUGASAN: { label: 'Tugasan', hint: 'Ada tarikh akhir. Guru boleh tanda siap.' },
+    PERINGATAN: { label: 'Peringatan', hint: 'Makluman tetap tanpa tarikh akhir dan tanpa tanda siap, contohnya "Isi cuti dalam JEJAK sebelum 9 pagi".' }, PAUTAN: { label: 'Pautan', hint: 'Link yang selalu dikongsi: borang, portal, folder Drive.' }, FAIL: { label: 'Fail', hint: 'Templat, surat atau borang untuk dimuat turun.' } };
   var TGS = [], SIAP = {};
   var HAD_FAIL = 10 * 1024 * 1024;
-  var LEPAS_HARI = 14; // tugasan yang lewat lebih 14 hari dipindahkan ke "Tugasan lepas"
+  var LEPAS_HARI = 14;
+  var PIN_SVG = '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4a1 1 0 0 0 1 1h2l5 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>';
+  var CHEV_SVG = '<svg class="chev" aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>'; // tugasan yang lewat lebih 14 hari dipindahkan ke "Tugasan lepas"
   var LINK_SVG = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1"/><path d="M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></svg>';
   var FILE_SVG = '<svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8z"/><path d="M14 3.5V8h4.5M9 13h6M9 16.5h4"/></svg>';
   var OPEN_SVG = '<svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
@@ -2305,7 +2351,18 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   function tgDone(t, n) { return !!(SIAP[t.id] && SIAP[t.id][n || S.me]); }
   function tgCan(t) { return S.admin || (!!S.me && t.by === S.me); }
   function byDue(a, b) { return a.due !== b.due ? (a.due < b.due ? -1 : 1) : (a.time || '99') < (b.time || '99') ? -1 : (a.time || '99') > (b.time || '99') ? 1 : 0; }
-  function tgActive() { return TGS.filter(function (t) { return t.type === 'TUGASAN' && dayDiff(t.due) >= -LEPAS_HARI; }).sort(byDue); }
+  // Selesai: semua yang terlibat sudah tanda siap, atau ditandakan selesai oleh penyelaras / pengirim.
+  function tgAllDone(t) { var w = tgFor(t); return !!w.length && w.every(function (n) { return tgDone(t, n); }); }
+  function tgIsClosed(t) { return t.type === 'TUGASAN' && (!!t.closed || tgAllDone(t)); }
+  function tgActive() { return TGS.filter(function (t) { return t.type === 'TUGASAN' && !tgIsClosed(t) && dayDiff(t.due) >= -LEPAS_HARI; }).sort(byDue); }
+  function pinActive() { return TGS.filter(function (t) { return t.type === 'PERINGATAN' && (!t.due || dayDiff(t.due) >= 0); }).sort(function (a, b) { return a.created < b.created ? 1 : -1; }); }
+  function tgForMe(t) { return !!S.me && tgFor(t).indexOf(S.me) >= 0; }
+  function tgMatch(t) {
+    var q = String(S.tgQ || '').trim().toLowerCase();
+    if (S.tgMineOnly && !tgForMe(t)) return false;
+    if (!q) return true;
+    return [t.title, t.detail, t.by, tgTargetLbl(t), t.fileName].join(' ').toLowerCase().indexOf(q) >= 0;
+  }
   // Tugasan saya yang belum siap, paling hampir dahulu.
   function myPending() { return tgActive().filter(function (t) { return tgMine(t) && !tgDone(t); }); }
   function tgBadge() {
@@ -2320,7 +2377,11 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     var all = !S.me;
     if (all && !S.admin) return '';
     var list = tgActive().filter(function (t) { return all || tgMine(t); });
-    if (!list.length) return '';
+    var pins = pinActive().filter(function (t) { return all || tgForMe(t); });
+    if (!list.length && !pins.length) return '';
+    var pinHtml = pins.length ? '<div class="dpins">' + pins.slice(0, 3).map(function (t) { return '<div class="dpin">' + PIN_SVG + '<span><b>' + esc(t.title) + '</b>' + (t.detail ? ' · ' + esc(t.detail.split('\n')[0]) : '') + '</span></div>'; }).join('') +
+      (pins.length > 3 ? '<p class="hint" style="margin:0">+' + (pins.length - 3) + ' peringatan lagi</p>' : '') + '</div>' : '';
+    if (!list.length) return '<section class="panel leavecard"><div class="sech"><h2>Peringatan</h2><span class="grow"></span><button type="button" class="link" data-act="go" data-page="tugasan">Lihat semua</button></div>' + pinHtml + '</section>';
     var pend = all ? [] : list.filter(function (t) { return !tgDone(t); });
     list = pend.concat(list.filter(function (t) { return pend.indexOf(t) < 0; }));
     var urgent = pend.filter(function (t) { return countdown(t).n <= 3; }).length;
@@ -2328,7 +2389,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     var show = list.slice(0, 6);
     return '<section class="panel leavecard"><div class="sech"><h2>' + esc(title) + '</h2><span class="grow"></span>' +
       '<button type="button" class="link" data-act="go" data-page="tugasan">Lihat semua</button></div>' +
-      (urgent ? '<div class="lc-cap warn">' + urgent + ' tugasan tamat dalam 3 hari atau sudah lewat.</div>' : '') +
+      (urgent ? '<div class="lc-cap warn">' + urgent + ' tugasan tamat dalam 3 hari atau sudah lewat.</div>' : '') + pinHtml +
       '<div class="dtg">' + show.map(function (t) {
         var c = countdown(t), done = !all && tgDone(t), who = tgFor(t), n = who.filter(function (x) { return tgDone(t, x); }).length;
         var st = all ? '' : '<span class="st ' + (done ? 'ok' : 'no') + '">' + (done ? 'Sudah siap' : 'Belum siap') + '</span>';
@@ -2353,22 +2414,48 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   function tgEditBtns(t) {
     return tgCan(t) ? '<div class="row"><button type="button" class="link" data-act="tgEdit" data-id="' + esc(t.id) + '">Edit</button><button type="button" class="link red" data-act="tgAskDel" data-id="' + esc(t.id) + '">Padam</button></div>' : '';
   }
-  function taskRow(t) {
-    var c = countdown(t), mine = tgMine(t), done = mine && tgDone(t), p = t.due.split('-').map(Number);
+  function tgProg(t) {
     var who = tgFor(t), siap = who.filter(function (n) { return tgDone(t, n); }), belum = who.filter(function (n) { return !tgDone(t, n); });
-    var pct = who.length ? Math.round(siap.length / who.length * 100) : 0;
-    var showNames = true; // semua staf boleh lihat siapa sudah dan belum siap, supaya sesiapa boleh mengingatkan
-    var cls = done ? 'done' : (c.cls === 'ok' ? '' : c.cls);
-    var prog = who.length ? '<div class="prog"><span class="bar" role="img" aria-label="' + siap.length + ' daripada ' + who.length + ' siap"><i style="width:' + pct + '%"></i></span><span><b>' + siap.length + '/' + who.length + '</b> sudah tanda siap</span>' +
-      (showNames && belum.length ? '<details><summary>Belum siap (' + belum.length + ')</summary><ol class="names">' + belum.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol></details>' : '') +
-      (showNames && siap.length ? '<details class="sudah"><summary>Sudah siap (' + siap.length + ')</summary><ol class="names">' + siap.slice().sort(function (a, b) { return SIAP[t.id][a] < SIAP[t.id][b] ? -1 : 1; }).map(function (n) { var at = SIAP[t.id][n] || ''; return '<li>' + esc(n) + (at ? ' <span class="at">' + esc(shortDate(at.slice(0, 10)) + ' ' + timeLbl(at.slice(11, 16))) + '</span>' : '') + '</li>'; }).join('') + '</ol></details>' : '') + '</div>' : '';
-    var doneBtn = mine ? '<button type="button" class="donebtn" data-act="tgDone" data-id="' + esc(t.id) + '" aria-pressed="' + (done ? 'true' : 'false') + '"' + (S.tgDoneBusy === t.id ? ' disabled' : '') + '><i aria-hidden="true"></i>' + (S.tgDoneBusy === t.id ? 'Menyimpan…' : done ? 'Sudah siap' : 'Tanda siap') + '</button>' : '';
-    return '<div class="tgr ' + cls + '" data-tg="' + esc(t.id) + '"><div class="tg-date" aria-hidden="true"><b>' + p[2] + '</b><span>' + MON3[p[1] - 1] + '</span></div>' +
-      '<div class="cm"><b>' + esc(t.title) + '</b>' +
-        '<div class="meta"><span class="cd ' + (done ? 'done' : c.cls) + '">' + esc(done ? 'Siap' : c.text) + '</span><span>Tarikh akhir: ' + esc(dueLbl(t)) + '</span><span>Untuk: ' + esc(tgTargetLbl(t)) + '</span><span>Oleh ' + esc(t.by) + '</span></div>' +
-        (t.detail ? '<div class="detail">' + esc(t.detail) + '</div>' : '') + tgAttach(t) + prog + '</div>' +
-      '<div class="acts">' + doneBtn + '<div class="row"><button type="button" class="link" data-act="tgWa" data-id="' + esc(t.id) + '">' + (showNames ? 'Peringatan WhatsApp' : 'Kongsi') + '</button></div>' + tgEditBtns(t) + '</div>' +
-      (S.tgConfirm === t.id ? tgConfirmBar(t) : '') + '</div>';
+    if (!who.length) return '';
+    var pct = Math.round(siap.length / who.length * 100);
+    return '<div class="prog"><span class="bar" role="img" aria-label="' + siap.length + ' daripada ' + who.length + ' siap"><i style="width:' + pct + '%"></i></span><span><b>' + siap.length + '/' + who.length + '</b> sudah tanda siap</span>' +
+      (belum.length ? '<details><summary>Belum siap (' + belum.length + ')</summary><ol class="names">' + belum.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ol></details>' : '') +
+      (siap.length ? '<details class="sudah"><summary>Sudah siap (' + siap.length + ')</summary><ol class="names">' + siap.slice().sort(function (a, b) { return SIAP[t.id][a] < SIAP[t.id][b] ? -1 : 1; }).map(function (n) { var at = SIAP[t.id][n] || ''; return '<li>' + esc(n) + (at ? ' <span class="at">' + esc(shortDate(at.slice(0, 10)) + ' ' + timeLbl(at.slice(11, 16))) + '</span>' : '') + '</li>'; }).join('') + '</ol></details>' : '') + '</div>';
+  }
+  function taskRow(t) {
+    var c = countdown(t), mine = tgMine(t), done = mine && tgDone(t), p = t.due.split('-').map(Number), open = !!S.tgOpen[t.id];
+    var who = tgFor(t), nSiap = who.filter(function (n) { return tgDone(t, n); }).length, closed = tgIsClosed(t);
+    var cls = closed ? 'closed' : done ? 'done' : (c.cls === 'ok' ? '' : c.cls);
+    var chip = closed ? '<span class="cd done">' + (t.closed ? 'Ditandakan selesai' : 'Semua siap') + '</span>' : done ? '<span class="st ok">Sudah siap</span>' : '<span class="cd ' + c.cls + '">' + esc(c.text) + '</span>';
+    var doneBtn = mine && !t.closed ? '<button type="button" class="donebtn sm" data-act="tgDone" data-id="' + esc(t.id) + '" aria-pressed="' + (done ? 'true' : 'false') + '"' + (S.tgDoneBusy === t.id ? ' disabled' : '') +
+      ' aria-label="' + esc((done ? 'Batal tanda siap: ' : 'Tanda siap: ') + t.title) + '"><i aria-hidden="true"></i>' + (S.tgDoneBusy === t.id ? '…' : done ? 'Siap' : 'Tanda siap') + '</button>' : '';
+    var canClose = tgCan(t) && t.type === 'TUGASAN' && !tgAllDone(t);
+    var body = open ? '<div class="tg-body">' +
+        '<div class="meta"><span>Tarikh akhir: ' + esc(dueLbl(t)) + '</span><span>Untuk: ' + esc(tgTargetLbl(t)) + '</span><span>Oleh ' + esc(t.by) + '</span>' +
+          (t.closed ? '<span>Ditandakan selesai oleh ' + esc(t.closed.by) + ', ' + esc(shortDate(t.closed.at.slice(0, 10))) + '</span>' : '') + '</div>' +
+        (t.detail ? '<div class="detail">' + esc(t.detail) + '</div>' : '') + tgAttach(t) + tgProg(t) +
+        '<div class="tg-acts"><button type="button" class="link" data-act="tgWa" data-id="' + esc(t.id) + '">Peringatan WhatsApp</button>' +
+          (canClose ? (t.closed ? '<button type="button" class="link" data-act="tgReopen" data-id="' + esc(t.id) + '">Buka semula</button>'
+            : '<button type="button" class="link" data-act="tgClose" data-id="' + esc(t.id) + '">Tandakan selesai</button>') : '') +
+          (tgCan(t) ? '<button type="button" class="link" data-act="tgEdit" data-id="' + esc(t.id) + '">Edit</button><button type="button" class="link red" data-act="tgAskDel" data-id="' + esc(t.id) + '">Padam</button>' : '') + '</div>' +
+        (S.tgConfirm === t.id ? tgConfirmBar(t) : '') + '</div>' : '';
+    return '<div class="tgr c ' + cls + (open ? ' open' : '') + '" data-tg="' + esc(t.id) + '"><div class="tg-line">' +
+      '<button type="button" class="tg-head" data-act="tgOpen" data-id="' + esc(t.id) + '" data-k="tgh-' + esc(t.id) + '" aria-expanded="' + open + '">' +
+        '<span class="tg-date sm" aria-hidden="true"><b>' + p[2] + '</b><span>' + MON3[p[1] - 1] + '</span></span>' +
+        '<span class="tg-hm"><b class="tg-t">' + esc(t.title) + '</b><span class="meta">' + chip + '<span>' + esc(shortDate(t.due) + (t.time ? ' ' + timeLbl(t.time) : '')) + '</span>' +
+          '<span>' + esc(tgTargetLbl(t)) + '</span>' + (who.length ? '<span class="cnt">' + nSiap + '/' + who.length + ' siap</span>' : '') + '</span></span>' + CHEV_SVG + '</button>' +
+      doneBtn + '</div>' + body + '</div>';
+  }
+  function pinRow(t) {
+    var open = !!S.tgOpen[t.id];
+    return '<div class="tgr c pin' + (open ? ' open' : '') + '" data-tg="' + esc(t.id) + '"><div class="tg-line">' +
+      '<button type="button" class="tg-head" data-act="tgOpen" data-id="' + esc(t.id) + '" data-k="tgh-' + esc(t.id) + '" aria-expanded="' + open + '">' +
+        '<span class="tg-pin" aria-hidden="true">' + PIN_SVG + '</span><span class="tg-hm"><b class="tg-t">' + esc(t.title) + '</b>' +
+        '<span class="meta"><span>' + esc(tgTargetLbl(t)) + '</span>' + (t.due ? '<span>Sehingga ' + esc(shortDate(t.due)) + '</span>' : '') + '<span>Oleh ' + esc(t.by) + '</span></span></span>' + CHEV_SVG + '</button></div>' +
+      (open ? '<div class="tg-body">' + (t.detail ? '<div class="detail">' + esc(t.detail) + '</div>' : '') + tgAttach(t) +
+        '<div class="tg-acts"><button type="button" class="link" data-act="tgWa" data-id="' + esc(t.id) + '">Kongsi</button>' +
+        (tgCan(t) ? '<button type="button" class="link" data-act="tgEdit" data-id="' + esc(t.id) + '">Edit</button><button type="button" class="link red" data-act="tgAskDel" data-id="' + esc(t.id) + '">Padam</button>' : '') + '</div>' +
+        (S.tgConfirm === t.id ? tgConfirmBar(t) : '') + '</div>' : '') + '</div>';
   }
   function linkRow(t) {
     var f = t.type === 'FAIL';
@@ -2378,28 +2465,53 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
       '<div class="acts"><div class="row"><button type="button" class="link" data-act="tgWa" data-id="' + esc(t.id) + '">Kongsi</button></div>' + tgEditBtns(t) + '</div>' +
       (S.tgConfirm === t.id ? tgConfirmBar(t) : '') + '</div>';
   }
+  function tgGroups(list) {
+    var g = [['Lewat', []], ['Minggu ini', []], ['Akan datang', []]];
+    list.forEach(function (t) { var n = countdown(t).n; g[n < 0 ? 0 : n <= 7 ? 1 : 2][1].push(t); });
+    return g.filter(function (x) { return x[1].length; }).map(function (x) {
+      return '<div class="tg-grp"><h3 class="tg-gh' + (x[0] === 'Lewat' ? ' late' : '') + '">' + x[0] + ' <span>' + x[1].length + '</span></h3><div class="list">' + x[1].map(taskRow).join('') + '</div></div>';
+    }).join('');
+  }
   function viewTugasan() {
-    var f = S.tgFilter, act = tgActive();
-    var past = TGS.filter(function (t) { return t.type === 'TUGASAN' && dayDiff(t.due) < -LEPAS_HARI; }).sort(byDue).reverse();
-    var links = TGS.filter(function (t) { return t.type !== 'TUGASAN'; }).sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; });
-    var pend = myPending();
-    var chips = '<div class="tgfilter" role="group" aria-label="Tapis">' + [['ALL', 'Semua'], ['TUGASAN', 'Tugasan (' + act.length + ')'], ['LINK', 'Pautan & fail (' + links.length + ')']].map(function (x) {
+    var f = S.tgFilter;
+    var act = tgActive(), pins = pinActive();
+    var closed = TGS.filter(function (t) { return tgIsClosed(t); }).sort(byDue).reverse();
+    var expired = TGS.filter(function (t) { return t.type === 'TUGASAN' && !tgIsClosed(t) && dayDiff(t.due) < -LEPAS_HARI; }).sort(byDue).reverse();
+    var pinsOld = TGS.filter(function (t) { return t.type === 'PERINGATAN' && t.due && dayDiff(t.due) < 0; }).sort(byDue).reverse();
+    var links = TGS.filter(function (t) { return t.type === 'PAUTAN' || t.type === 'FAIL'; }).sort(function (a, b) { return a.created < b.created ? 1 : a.created > b.created ? -1 : 0; });
+    var nSel = closed.length + expired.length + pinsOld.length;
+    var tabs = '<div class="tgbar"><div class="tgfilter" role="group" aria-label="Paparan">' + [['AKTIF', 'Aktif (' + act.length + ')'], ['SELESAI', 'Selesai (' + nSel + ')'], ['LINK', 'Pautan & fail (' + links.length + ')']].map(function (x) {
       return choice('tgf-' + x[0], 'tgFilter', x[0], x[1], f === x[0]);
-    }).join('') + '</div>';
+    }).join('') + '</div><span class="grow"></span>' +
+      '<input id="tg-q" type="search" placeholder="Cari tajuk, arahan atau nama" aria-label="Cari" value="' + esc(S.tgQ || '') + '">' +
+      (S.me ? '<button type="button" class="choice" data-act="tgMineOnly" data-k="tg-mine" aria-pressed="' + (S.tgMineOnly ? 'true' : 'false') + '">Untuk saya</button>' : '') + '</div>';
     var noName = !S.me && !S.admin ? '<div class="note">Pilih nama anda (butang di atas kanan) untuk menambah item dan menanda tugasan siap.</div>' : '';
-    var lead = S.me ? (pend.length ? 'Anda ada <b>' + pend.length + '</b> tugasan belum siap.' : 'Tiada tugasan tertunggak untuk anda.') : '';
-    var secT = '<section class="panel"><div class="sech"><h2>Tugasan aktif</h2><span class="grow"></span><button type="button" class="btn" data-act="tgNew" data-val="TUGASAN">+ Tugasan</button></div>' +
-      (lead ? '<p class="hint" style="margin:-6px 0 0">' + lead + ' Tugasan disusun mengikut tarikh akhir terdekat.</p>' : '') +
-      (act.length ? '<div class="list">' + act.map(taskRow).join('') + '</div>' : '<div class="empty">Tiada tugasan aktif. Tekan + Tugasan untuk menambah tugasan dengan tarikh akhir.</div>') + '</section>';
-    var secL = '<section class="panel"><div class="sech"><h2>Pautan &amp; fail</h2><span class="grow"></span><button type="button" class="btn" data-act="tgNew" data-val="PAUTAN">+ Pautan</button><button type="button" class="btn" data-act="tgNew" data-val="FAIL">+ Fail</button></div>' +
-      '<p class="hint" style="margin:-6px 0 0">Link dan fail yang selalu dicari dalam WhatsApp, di satu tempat.</p>' +
-      (links.length ? '<div class="list">' + links.map(linkRow).join('') + '</div>' : '<div class="empty">Belum ada pautan atau fail. Contoh: borang tuntutan, folder Drive jabatan, templat laporan program.</div>') + '</section>';
-    var secP = past.length ? '<section class="panel"><details><summary class="flabel" style="cursor:pointer">Tugasan lepas (' + past.length + ')</summary><div class="list" style="margin-top:12px">' + past.map(taskRow).join('') + '</div></details></section>' : '';
+    var filtering = !!(String(S.tgQ || '').trim() || S.tgMineOnly);
+    var none = function (txt) { return '<div class="empty">' + (filtering ? 'Tiada yang sepadan dengan tapisan.' : txt) + '</div>'; };
+    var html = '';
+    if (f === 'AKTIF') {
+      var ps = pins.filter(tgMatch), as = act.filter(tgMatch), pend = myPending();
+      html += ps.length || !filtering ? '<section class="panel pins"><div class="sech"><h2>Peringatan</h2><span class="grow"></span><button type="button" class="btn" data-act="tgNew" data-val="PERINGATAN">+ Peringatan</button></div>' +
+        (ps.length ? '<div class="list">' + ps.map(pinRow).join('') + '</div>' : '<p class="hint" style="margin:-4px 0 0">Makluman tetap tanpa tarikh akhir, contohnya peraturan harian jabatan.</p>') + '</section>' : '';
+      html += '<section class="panel"><div class="sech"><h2>Tugasan aktif</h2><span class="grow"></span><button type="button" class="btn" data-act="tgNew" data-val="TUGASAN">+ Tugasan</button></div>' +
+        (S.me ? '<p class="hint" style="margin:-6px 0 0">' + (pend.length ? 'Anda ada <b>' + pend.length + '</b> tugasan belum siap.' : 'Tiada tugasan tertunggak untuk anda.') + ' Tekan tugasan untuk melihat arahan dan senarai nama.</p>' : '') +
+        (as.length ? tgGroups(as) : none('Tiada tugasan aktif. Tugasan yang semua sudah siap dipindahkan ke tab Selesai.')) + '</section>';
+    } else if (f === 'SELESAI') {
+      var cs = closed.filter(tgMatch), xs = expired.filter(tgMatch), po = pinsOld.filter(tgMatch);
+      html += '<section class="panel"><div class="sech"><h2>Selesai</h2></div><p class="hint" style="margin:-6px 0 0">Tugasan masuk ke sini bila semua yang terlibat sudah tanda siap, atau bila penyelaras atau pengirim menekan Tandakan selesai.</p>' +
+        (cs.length ? '<div class="list">' + cs.map(taskRow).join('') + '</div>' : none('Belum ada tugasan yang selesai.')) + '</section>';
+      if (xs.length) html += '<section class="panel"><div class="sech"><h2>Tamat tempoh</h2></div><p class="hint" style="margin:-6px 0 0">Lewat lebih ' + LEPAS_HARI + ' hari dan belum semua siap.</p><div class="list">' + xs.map(taskRow).join('') + '</div></section>';
+      if (po.length) html += '<section class="panel"><div class="sech"><h2>Peringatan tamat</h2></div><div class="list">' + po.map(pinRow).join('') + '</div></section>';
+    } else {
+      var ls = links.filter(tgMatch);
+      html += '<section class="panel"><div class="sech"><h2>Pautan &amp; fail</h2><span class="grow"></span><button type="button" class="btn" data-act="tgNew" data-val="PAUTAN">+ Pautan</button><button type="button" class="btn" data-act="tgNew" data-val="FAIL">+ Fail</button></div>' +
+        '<p class="hint" style="margin:-6px 0 0">Link dan fail yang selalu dicari dalam WhatsApp, di satu tempat.</p>' +
+        (ls.length ? '<div class="list">' + ls.map(linkRow).join('') + '</div>' : none('Belum ada pautan atau fail. Contoh: borang tuntutan, folder Drive jabatan, templat laporan program.')) + '</section>';
+    }
     return '<div class="stack">' +
-      heading('Tugasan & Pautan', 'Tugasan, link dan fail jabatan yang biasa dikongsi di WhatsApp. Kiraan masa membantu semua orang ingat tarikh akhir.',
+      heading('Tugasan & Pautan', 'Tugasan, peringatan, link dan fail jabatan yang biasa dikongsi di WhatsApp.',
         '<div class="actions"><button type="button" class="btn primary" data-act="tgNew" data-val="TUGASAN">+ Tambah</button></div>') +
-      noName + chips +
-      (f === 'LINK' ? '' : secT) + (f === 'TUGASAN' ? '' : secL) + (f === 'LINK' ? '' : secP) + '</div>';
+      noName + tabs + html + '</div>';
   }
   // Teks WhatsApp: peringatan (dengan senarai belum siap untuk pengirim dan penyelaras) atau kongsi pautan.
   function tgShare(id) {
@@ -2420,6 +2532,12 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
       }
       lines.push(''); lines.push('Tanda siap dalam JEJAK JSS, menu Tugasan & Pautan.');
       openShareText(names ? 'Peringatan WhatsApp' : 'Kongsi tugasan', 'Kiraan masa dan senarai dikemas kini setiap kali butang ini ditekan.', lines.join('\n'));
+    } else if (t.type === 'PERINGATAN') {
+      lines.push('*Peringatan: ' + t.title + '*');
+      if (t.detail) lines.push(t.detail);
+      if (t.link) lines.push(t.link);
+      if (t.due) lines.push('(sehingga ' + longDate(t.due) + ')');
+      openShareText('Kongsi peringatan', 'Hantar ke group jabatan.', lines.join('\n'));
     } else {
       lines.push('*' + t.title + '*');
       if (t.detail) lines.push(t.detail);
@@ -2479,9 +2597,13 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   function renderTg(focusKey) {
     var f = S.tf, t = f.type, editing = !!f.id;
     var h = '';
-    if (!editing) h += '<div class="field"><span class="flabel">Jenis</span><div class="seg">' + ['TUGASAN', 'PAUTAN', 'FAIL'].map(function (k) { return choice('tf-type-' + k, 'tfType', k, TTYPES[k].label, t === k); }).join('') + '</div><span class="hint">' + esc(TTYPES[t].hint) + '</span></div>';
-    var tl = t === 'TUGASAN' ? ['Tugasan *', 'Contoh: Hantar RPH minggu 47'] : t === 'PAUTAN' ? ['Nama pautan *', 'Contoh: Borang tuntutan perjalanan'] : ['Nama fail *', 'Contoh: Templat laporan program'];
+    var kinds = !editing ? ['TUGASAN', 'PERINGATAN', 'PAUTAN', 'FAIL'] : (t === 'TUGASAN' || t === 'PERINGATAN') ? ['TUGASAN', 'PERINGATAN'] : [];
+    if (kinds.length) h += '<div class="field"><span class="flabel">Jenis</span><div class="seg">' + kinds.map(function (k) { return choice('tf-type-' + k, 'tfType', k, TTYPES[k].label, t === k); }).join('') + '</div><span class="hint">' + esc(TTYPES[t].hint) + '</span></div>';
+    var tl = t === 'TUGASAN' ? ['Tugasan *', 'Contoh: Hantar RPH minggu 47'] : t === 'PERINGATAN' ? ['Peringatan *', 'Contoh: Isi cuti dalam JEJAK sebelum 9 pagi'] : t === 'PAUTAN' ? ['Nama pautan *', 'Contoh: Borang tuntutan perjalanan'] : ['Nama fail *', 'Contoh: Templat laporan program'];
     h += '<div class="field"><label for="tf-title">' + esc(tl[0]) + '</label><input id="tf-title" type="text" maxlength="150" data-tf="title" value="' + esc(f.title) + '" placeholder="' + esc(tl[1]) + '"></div>';
+    if (t === 'PERINGATAN') {
+      h += '<div class="field"><label for="tf-due">Papar sehingga (pilihan)</label><input id="tf-due" type="date" data-tf="due" value="' + esc(f.due) + '"><span class="hint">Kosongkan untuk peringatan tetap. Selepas tarikh ini, peringatan dipindahkan ke tab Selesai.</span></div>';
+    }
     if (t === 'TUGASAN') {
       h += '<div class="grid2"><div class="field"><label for="tf-due">Tarikh akhir *</label><input id="tf-due" type="date" data-tf="due" value="' + esc(f.due) + '"></div>' +
         '<div class="field"><label for="tf-time">Masa (pilihan)</label><input id="tf-time" type="time" data-tf="time" value="' + esc(f.time) + '"></div></div>';
@@ -2539,7 +2661,8 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   function tfValidate(f) {
     if (f.mode === 'UNIT' && UNITS.indexOf(f.target) < 0) return 'Pilih unit.';
     if (f.mode === 'NAMA' && !f.people.length) return 'Pilih sekurang-kurangnya satu nama.';
-    if (!f.title.trim()) return f.type === 'TUGASAN' ? 'Isi nama tugasan.' : f.type === 'PAUTAN' ? 'Isi nama pautan.' : 'Isi nama fail.';
+    if (!f.title.trim()) return f.type === 'TUGASAN' ? 'Isi nama tugasan.' : f.type === 'PERINGATAN' ? 'Isi peringatan.' : f.type === 'PAUTAN' ? 'Isi nama pautan.' : 'Isi nama fail.';
+    if (f.type === 'PERINGATAN' && f.due && (!ISO.test(f.due) || (!f.id && f.due < todayISO()))) return 'Tarikh "papar sehingga" mesti hari ini atau selepasnya.';
     if (f.type === 'TUGASAN') {
       if (!ISO.test(f.due || '')) return 'Pilih tarikh akhir.';
       if (!f.id && f.due < todayISO()) return 'Tarikh akhir sudah berlalu. Pilih tarikh hari ini atau selepasnya.';
@@ -2556,7 +2679,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     if (err) { tgError(err); return; }
     S.tgBusy = true; tgError(''); renderTg();
     var send = function (file) {
-      var obj = { id: f.id, type: f.type, title: f.title.trim(), detail: f.detail, link: f.link.trim(), due: f.type === 'TUGASAN' ? f.due : '', time: f.type === 'TUGASAN' ? f.time : '',
+      var obj = { id: f.id, type: f.type, title: f.title.trim(), detail: f.detail, link: f.link.trim(), due: f.type === 'TUGASAN' || f.type === 'PERINGATAN' ? f.due : '', time: f.type === 'TUGASAN' ? f.time : '',
         target: f.mode === 'SEMUA' ? 'SEMUA' : f.mode === 'UNIT' ? f.target : 'PILIHAN', people: f.mode === 'NAMA' ? f.people.slice() : [], removeFile: !!f.removeFile };
       if (file) obj.file = file;
       call('simpanTugasan', [auth(), obj], function (d) {
@@ -2564,7 +2687,8 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
         applyData(d, ++S.seq);
         var wasTask = f.type === 'TUGASAN';
         closeTg();
-        if (S.tgFilter !== 'ALL' && S.tgFilter !== (wasTask ? 'TUGASAN' : 'LINK')) S.tgFilter = 'ALL';
+        S.tgFilter = f.type === 'PAUTAN' || f.type === 'FAIL' ? 'LINK' : 'AKTIF';
+        if (d && d.savedId) S.tgOpen[d.savedId] = true;
         render();
         toast(f.id ? 'Perubahan disimpan' : wasTask ? 'Tugasan ditambah. Tekan Peringatan WhatsApp untuk memaklumkan group.' : 'Disimpan');
         var row = d && d.savedId && document.querySelector('[data-tg="' + d.savedId + '"]');
@@ -3572,10 +3696,26 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
         renderCat(k); break;
       case 'gajiAdmin': openGaji(); break;
       case 'tgFilter': S.tgFilter = val; S.tgConfirm = null; renderKeep(k); break;
+      case 'tgMineOnly': S.tgMineOnly = !S.tgMineOnly; renderKeep(k); break;
+      case 'tgOpen': S.tgOpen[id] = !S.tgOpen[id]; if (!S.tgOpen[id] && S.tgConfirm === id) S.tgConfirm = null; renderKeep(k); break;
+      case 'tgClose': case 'tgReopen':
+        if (S.tgBusy) break;
+        S.tgBusy = true;
+        call('tutupTugasan', [auth(), id, act === 'tgClose'], function (dd) {
+          S.tgBusy = false; applyData(dd, ++S.seq); render();
+          toast(act === 'tgClose' ? 'Dipindahkan ke tab Selesai' : 'Dibuka semula');
+        }, function (e) {
+          S.tgBusy = false; var ec = codeOf(e);
+          if (isAuthCode(ec)) { render(); handleAuth(ec); return; }
+          render(); toast(message(ec));
+        });
+        break;
       case 'tgNew': openTg(val || 'TUGASAN', ''); break;
       case 'tgEdit': openTg('', id); break;
       case 'closeTg': closeTg(); break;
-      case 'tfType': if (!S.tf || S.tf.id) break; S.tf.type = val; tgError(''); renderTg(k); break;
+      case 'tfType':
+        if (!S.tf || (S.tf.id && !((S.tf.type === 'TUGASAN' || S.tf.type === 'PERINGATAN') && (val === 'TUGASAN' || val === 'PERINGATAN')))) break;
+        S.tf.type = val; tgError(''); renderTg(k); break;
       case 'tfTarget': if (!S.tf) break; S.tf.target = val; tgError(''); renderTg(k); break;
       case 'tfMode':
         if (!S.tf) break;
@@ -3692,6 +3832,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     if (t.dataset.nota != null) { S.notaDraft[t.dataset.nota] = t.value; return; }
     if (t.dataset.cf != null && S.cf) { S.cf[t.dataset.cf] = t.value; return; }
     if (t.id === 'tf-q' && S.tf) { S.tf.q = t.value; updatePeople(); return; }
+    if (t.id === 'tg-q') { S.tgQ = t.value; var pos = t.selectionStart; render(); var q2 = $('#tg-q'); if (q2) { q2.focus(); try { q2.setSelectionRange(pos, pos); } catch (x) {} } return; }
     if (t.dataset.tf != null && S.tf) { S.tf[t.dataset.tf] = t.value; return; }
     if (t.dataset.hol != null) { S.holForm[t.dataset.hol] = t.value; return; }
     if (t.dataset.leave != null && S.leaveForm) { S.leaveForm[t.dataset.leave] = t.value; S.leaveForm.dirty = true; return; }
