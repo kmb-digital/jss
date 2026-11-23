@@ -6,10 +6,16 @@
 <title>JEJAK JSS</title>
 <script>
   /* ============================================================
-     UNTUK GITHUB SAHAJA: tampal link web app Apps Script (berakhir /exec).
+     UNTUK GITHUB SAHAJA: link web app Apps Script (berakhir /exec).
+     Sudah ditetapkan. Tukar hanya jika anda membuat New deployment.
      Dalam editor Apps Script, baris ini diabaikan.
      ============================================================ */
   var JEJAK_API = "https://script.google.com/macros/s/AKfycby-b5sGPG0dNc2er2JieNPaWrE1464WDoMWzNBugRSVnJ_r6Z5TiiIzId-sVf3UzMKkuw/exec";
+  /* Pautan ke app yang diletakkan di hujung mesej WhatsApp tugasan, peringatan dan pautan
+     (tidak termasuk ringkasan keberadaan staf).
+     Halaman /access/ sengaja tiada gambar & tajuk supaya WhatsApp tidak buat pratonton.
+     Kosongkan ("") jika tidak mahu pautan ini. */
+  var JEJAK_LINK = "https://kmb-digital.github.io/jss/access/";
 </script>
 <meta name="description" content="Lapor cuti, tugas rasmi dan time off, serta tugasan dan pautan jabatan. Jabatan Sains Sosial, Kolej MARA Banting.">
 <meta property="og:type" content="website">
@@ -466,6 +472,9 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
 .gj-res b{color:var(--ink)}
 .aksesbar{display:flex;gap:6px 14px;align-items:center;flex-wrap:wrap}
 .aksesbar .grow{flex:1 1 280px}
+#pinSheet input[type=password]{max-width:220px;letter-spacing:.2em}
+.pinlink{display:flex;align-items:center;gap:4px 10px;flex-wrap:wrap;font-size:13.5px;color:var(--muted);margin-top:-6px}
+.pinlink .link{padding:2px 0}
 #gajiSheet textarea{min-height:170px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.5}
 .lvl{display:inline-block;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);background:var(--white);white-space:nowrap}
 .lvl.hi{background:var(--navy);border-color:var(--navy);color:#fff}
@@ -539,8 +548,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
 .tg-date.sm span{font-size:10px}
 .tgr.closed .tg-date{background:var(--time-bg);color:var(--time-fg)}
 .tg-hm{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.tg-t{font-size:14.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tgr.open .tg-t{white-space:normal;overflow-wrap:anywhere}
+.tg-t{font-size:14.5px;font-weight:700;line-height:1.35;overflow-wrap:anywhere}
 .tg-hm .meta{gap:2px 10px}
 .tg-hm .meta .cnt{font-variant-numeric:tabular-nums}
 .tg-body{display:flex;flex-direction:column;gap:8px;padding:0 14px 14px 68px}
@@ -557,8 +565,10 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   .tg-body{padding-left:14px}
   .tgr.pin .tg-body{padding-left:14px}
   #tg-q{flex:1 1 100%}
-  .tg-line{flex-wrap:wrap;padding:0 12px 8px 0}
-  .tg-line .donebtn{margin-left:68px}
+  .tg-line{flex-wrap:wrap;padding:0 12px 0 0}
+  .tg-line .tg-head{flex:1 1 100%;align-items:flex-start;gap:10px}
+  .tg-line .tg-head .chev{margin-top:10px}
+  .tg-line .donebtn{margin:-2px 0 12px 66px}
 }
 .pick{border:1px solid var(--line2);border-radius:12px;overflow:hidden;background:var(--white)}
 .pick-top{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--ivory);border-bottom:1px solid var(--line)}
@@ -814,6 +824,23 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   </form>
 </div>
 
+<div class="sheet-backdrop" id="pinSheet" hidden>
+  <form class="sheet" id="pinForm" role="dialog" aria-modal="true" aria-labelledby="pinTitle" autocomplete="off" novalidate>
+    <div class="sheet-head">
+      <div>
+        <h2 id="pinTitle">PIN peribadi</h2>
+        <div class="sub" id="pinSub"></div>
+      </div>
+    </div>
+    <div class="stack" id="pinBody" style="gap:14px"></div>
+    <p class="err" id="pinErr" role="alert" hidden></p>
+    <div class="actions">
+      <button type="submit" class="btn primary" id="pinBtn">Simpan PIN</button>
+      <button type="button" class="link" data-act="closePin">Batal</button>
+    </div>
+  </form>
+</div>
+
 <div class="gate" id="gate" hidden>
   <form class="gate-card" id="gateForm" autocomplete="off">
     <div class="gate-top">
@@ -1057,7 +1084,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     leaveYear: Number(startDate.slice(0, 4)), leaveFor: '', leaveForm: null, leaveErr: '', leaveBusy: false,
     holYear: Number(startDate.slice(0, 4)), holForm: { date: '', end: '', name: '', type: 'Cuti Umum' }, holEditing: null, holErr: '', holBusy: false, holConfirm: null,
     catPeriod: startDate.slice(0, 7), catPerson: '', cf: null, catBusy: false, catConfirm: null, notaDraft: {}, pdfKind: 'rekod',
-    gaji: '', akses: 'PERLU', gajiErr: '', gajiBusy: false, aksesRingkas: null, gajiRes: null,
+    gaji: '', akses: 'PERLU', gajiErr: '', gajiBusy: false, aksesRingkas: null, gajiRes: null, pinPeribadi: false, pinBusy: false, pinBuang: false, pinReset: '',
     tgFilter: 'AKTIF', tgQ: '', tgMineOnly: false, tgOpen: {}, tf: null, tgBusy: false, tgConfirm: null, tgDoneBusy: ''
   };
   // Nombor gaji disimpan pada peranti ini bersama nama pemiliknya; jika nama bertukar, ia dibuang.
@@ -1077,7 +1104,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   function nameLocked() { return !S.admin && !!(S.editing || S.me); }
   function setMe(n) {
     S.me = n || ''; if (S.me) store.set(NAME_KEY, S.me); else store.del(NAME_KEY);
-    S.gaji = gajiFor(S.me); S.gajiErr = '';
+    S.gaji = gajiFor(S.me); S.gajiErr = ''; S.pinPeribadi = false;
     if (!S.admin) S.akses = 'PERLU';
   }
   function blankForm() {
@@ -1112,7 +1139,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     run[fn].apply(run, args);
   }
   function auth() { return { pin: S.pin, adminPin: S.adminPin, me: S.me, gaji: S.gaji }; }
-  var CODES = /(BERTINDIH\|[^|]*\|[^|]*\|[^|\r\n]*|PIN_ADMIN_SALAH|PIN_SALAH|PIN_KOSONG|TERKUNCI|AKSES_PERLU|AKSES_SALAH|AKSES_KUNCI|AKSES_BELUM_DAFTAR|BUKAN_PEMILIK|NAMA_TIDAK_SAH|DATA_TIDAK_SAH|TIADA_HARI_BEKERJA|BUKAN_PENYELARAS|REKOD_TIADA|BELUM_SEDIA|FAIL_BESAR|API_KOSONG)/;
+  var CODES = /(BERTINDIH\|[^|]*\|[^|]*\|[^|\r\n]*|PIN_ADMIN_SALAH|PIN_SALAH|PIN_KOSONG|TERKUNCI|AKSES_PERLU|AKSES_SALAH|AKSES_KUNCI|AKSES_BELUM_DAFTAR|BUKAN_PEMILIK|NAMA_TIDAK_SAH|DATA_TIDAK_SAH|TIADA_HARI_BEKERJA|BUKAN_PENYELARAS|REKOD_TIADA|BELUM_SEDIA|FAIL_BESAR|API_KOSONG|PIN_PERIBADI_TIDAK_SAH|PIN_PERIBADI_GAJI)/;
   function codeOf(e) { var m = CODES.exec(String((e && e.message) || e || '')); return m ? m[1] : ''; }
   function message(code) {
     if (code.indexOf('BERTINDIH') === 0) {
@@ -1124,9 +1151,11 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
       PIN_ADMIN_SALAH: 'PIN penyelaras tidak betul.',
       PIN_KOSONG: 'PIN belum ditetapkan. Hubungi penyelaras.',
       TERKUNCI: 'Terlalu banyak cubaan PIN yang salah. Cuba lagi selepas 15 minit.',
-      AKSES_PERLU: 'Masukkan nombor gaji anda untuk membuka data peribadi.',
-      AKSES_SALAH: 'Nombor gaji tidak sepadan dengan nama ini.',
-      AKSES_KUNCI: 'Terlalu banyak cubaan nombor gaji yang salah. Cuba lagi selepas 15 minit.',
+      AKSES_PERLU: 'Masukkan ' + (S.pinPeribadi ? 'PIN peribadi' : 'nombor gaji') + ' anda untuk membuka data peribadi.',
+      AKSES_SALAH: S.pinPeribadi ? 'PIN peribadi tidak sepadan dengan nama ini.' : 'Nombor gaji tidak sepadan dengan nama ini.',
+      AKSES_KUNCI: 'Terlalu banyak cubaan ' + (S.pinPeribadi ? 'PIN peribadi' : 'nombor gaji') + ' yang salah. Cuba lagi selepas 15 minit.',
+      PIN_PERIBADI_TIDAK_SAH: 'PIN peribadi mesti 4 hingga 8 digit nombor.',
+      PIN_PERIBADI_GAJI: 'PIN peribadi tidak boleh sama dengan nombor gaji. Pilih nombor lain.',
       AKSES_BELUM_DAFTAR: 'Nombor gaji anda belum didaftarkan. Sila hubungi penyelaras.',
       BUKAN_PEMILIK: 'Anda hanya boleh mengubah atau memadam rekod atas nama anda sendiri.',
       NAMA_TIDAK_SAH: 'Nama ini tiada dalam senarai staf. Tekan Muat semula dan cuba lagi.',
@@ -1198,10 +1227,12 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     });
     S.admin = !!(d && d.admin);
     S.akses = S.admin ? 'OK' : ((d && d.akses) || 'PERLU');
-    S.aksesRingkas = S.admin && d && d.aksesRingkas && Array.isArray(d.aksesRingkas.belum) ? { jumlah: Number(d.aksesRingkas.jumlah) || 0, belum: d.aksesRingkas.belum.map(String) } : null;
+    S.aksesRingkas = S.admin && d && d.aksesRingkas && Array.isArray(d.aksesRingkas.belum) ? { jumlah: Number(d.aksesRingkas.jumlah) || 0, belum: d.aksesRingkas.belum.map(String),
+      pin: Array.isArray(d.aksesRingkas.pin) ? d.aksesRingkas.pin.map(String) : [] } : null;
+    S.pinPeribadi = !!(d && d.pinPeribadi);
     if ((S.akses === 'SALAH' || S.akses === 'KUNCI') && S.gaji) {
       S.gaji = ''; store.del(GAJI_KEY);
-      S.gajiErr = S.akses === 'SALAH' ? message('AKSES_SALAH') + ' Masukkan semula.' : '';
+      S.gajiErr = S.akses !== 'SALAH' ? '' : S.pinPeribadi ? 'Anda menggunakan PIN peribadi. Masukkan PIN itu untuk membuka.' : message('AKSES_SALAH') + ' Masukkan semula.';
     }
     if (S.akses === 'OK') S.gajiErr = '';
     S.loadedAt = Date.now(); S.ready = true; S.loadErr = '';
@@ -1259,7 +1290,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
 
   // ---------- PIN
   function showGate(msg) {
-    ['#share', '#pdfSheet', '#whoSheet', '#adminSheet', '#catSheet', '#gajiSheet', '#tgSheet'].forEach(function (s) { $(s).hidden = true; });
+    ['#share', '#pdfSheet', '#whoSheet', '#adminSheet', '#catSheet', '#gajiSheet', '#tgSheet', '#pinSheet'].forEach(function (s) { $(s).hidden = true; });
     $('.app').inert = true;
     $('#gate').hidden = false;
     gateError(msg || '');
@@ -1787,16 +1818,19 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     var st = S.akses, locked = st === 'KUNCI' || st === 'BELUM_DAFTAR';
     var msg = st === 'KUNCI' ? message('AKSES_KUNCI') : st === 'BELUM_DAFTAR' ? message('AKSES_BELUM_DAFTAR') : S.gajiErr;
     return '<section class="panel lockcard"><h2>Data peribadi dikunci</h2>' +
-      '<p class="hint" style="margin:0">Aktiviti Individu' + (bakiAktif() ? ' dan Baki Cuti' : '') + ' hanya boleh dilihat oleh anda dan penyelaras. Masukkan nombor gaji anda untuk membukanya. Nombor ini diingat pada peranti ini sahaja.</p>' +
+      '<p class="hint" style="margin:0">Aktiviti Individu' + (bakiAktif() ? ' dan Baki Cuti' : '') + ' hanya boleh dilihat oleh anda dan penyelaras. ' +
+        (S.pinPeribadi ? 'Masukkan <b>PIN peribadi</b> yang anda tetapkan untuk membukanya. PIN ini diingat pada peranti ini sahaja.' : 'Masukkan nombor gaji anda untuk membukanya. Nombor ini diingat pada peranti ini sahaja.') + '</p>' +
       '<p class="hint" style="margin:0">Untuk <b>' + esc(S.me) + '</b>. Bukan anda? <button type="button" class="link" data-act="openWho">Tukar nama</button></p>' +
-      (locked ? '' : '<form id="gajiGate" autocomplete="off" novalidate><div class="lk-row"><input id="gj-in" type="password" autocomplete="off" aria-label="Nombor gaji" placeholder="Nombor gaji"' + (S.gajiBusy ? ' disabled' : '') + '>' +
+      (locked ? '' : '<form id="gajiGate" autocomplete="off" novalidate><div class="lk-row"><input id="gj-in" type="password" autocomplete="off"' +
+        (S.pinPeribadi ? ' inputmode="numeric" aria-label="PIN peribadi" placeholder="PIN peribadi"' : ' aria-label="Nombor gaji" placeholder="Nombor gaji"') + (S.gajiBusy ? ' disabled' : '') + '>' +
         '<button type="submit" class="btn primary"' + (S.gajiBusy ? ' disabled' : '') + '>' + (S.gajiBusy ? 'Menyemak…' : 'Buka') + '</button></div></form>') +
-      (msg ? '<p class="err" role="alert" id="gajiMsg">' + esc(msg) + '</p>' : '') + '</section>';
+      (msg ? '<p class="err" role="alert" id="gajiMsg">' + esc(msg) + '</p>' : '') +
+      (S.pinPeribadi ? '<p class="hint" style="margin:0">Lupa PIN? Minta penyelaras reset PIN anda, kemudian buka semula dengan nombor gaji.</p>' : '') + '</section>';
   }
   function gajiSubmit() {
     if (S.gajiBusy) return;
     var inp = $('#gj-in'), v = inp ? inp.value.trim() : '';
-    if (!v) { S.gajiErr = 'Masukkan nombor gaji anda.'; render(); var i0 = $('#gj-in'); if (i0) i0.focus(); return; }
+    if (!v) { S.gajiErr = S.pinPeribadi ? 'Masukkan PIN peribadi anda.' : 'Masukkan nombor gaji anda.'; render(); var i0 = $('#gj-in'); if (i0) i0.focus(); return; }
     S.gajiBusy = true; S.gajiErr = ''; S.gaji = v; render();
     var seq = ++S.seq, tried = v;
     call('masuk', [auth()], function (d) {
@@ -1807,7 +1841,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
         render(); toast('Data peribadi dibuka');
       } else {
         S.gaji = ''; store.del(GAJI_KEY);
-        S.gajiErr = S.akses === 'SALAH' ? 'Nombor gaji tidak sepadan dengan nama ini. Semak dan cuba lagi.' : '';
+        S.gajiErr = S.akses === 'SALAH' ? (S.pinPeribadi ? 'PIN peribadi' : 'Nombor gaji') + ' tidak sepadan dengan nama ini. Semak dan cuba lagi.' : '';
         render(); var i1 = $('#gj-in'); if (i1) i1.focus();
       }
     }, function (e) {
@@ -1817,6 +1851,86 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
       S.gajiErr = message(c); render();
     });
   }
+  // PIN peribadi (pilihan): guru menggantikan nombor gaji dengan PIN sendiri untuk membuka data peribadi.
+  function pinLinkRow() {
+    if (S.admin || !S.me || !peribadiBuka()) return '';
+    return '<div class="pinlink"><span>' + (S.pinPeribadi ? 'Data peribadi anda dibuka dengan PIN peribadi.' : 'Data peribadi anda dibuka dengan nombor gaji.') + '</span>' +
+      '<button type="button" class="link" data-act="openPin">' + (S.pinPeribadi ? 'Tukar PIN peribadi' : 'Tetapkan PIN peribadi (pilihan)') + '</button></div>';
+  }
+  var pinReturn = null;
+  function pinError(m) { var e = $('#pinErr'); e.textContent = m; e.hidden = !m; }
+  function renderPin() {
+    var has = S.pinPeribadi;
+    $('#pinTitle').textContent = has ? 'Tukar PIN peribadi' : 'Tetapkan PIN peribadi';
+    $('#pinSub').textContent = 'Untuk ' + S.me + '. Pilihan sahaja.';
+    var h = '<p class="hint" style="margin:0">' + (has
+      ? 'Masukkan PIN baharu. PIN lama tidak lagi boleh digunakan selepas ini.'
+      : 'Selepas PIN ditetapkan, Aktiviti Individu' + (bakiAktif() ? ' dan Baki Cuti' : '') + ' dibuka dengan PIN ini dan <b>nombor gaji tidak lagi diterima</b>. Jika terlupa, minta penyelaras reset PIN anda.') + '</p>' +
+      '<div class="field"><label for="pn-1">PIN baharu (4 hingga 8 digit)</label><input id="pn-1" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"' + (S.pinBusy ? ' disabled' : '') + '></div>' +
+      '<div class="field"><label for="pn-2">Masukkan semula PIN</label><input id="pn-2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="8"' + (S.pinBusy ? ' disabled' : '') + '></div>';
+    if (has) h += '<div class="pinlink"><button type="button" class="link" data-act="pinRemove"' + (S.pinBusy ? ' disabled' : '') + '>' +
+      (S.pinBuang ? 'Tekan sekali lagi untuk buang PIN' : 'Buang PIN peribadi (guna nombor gaji semula)') + '</button></div>';
+    $('#pinBody').innerHTML = h;
+    $('#pinBtn').disabled = S.pinBusy; $('#pinBtn').textContent = S.pinBusy ? 'Menyimpan…' : 'Simpan PIN';
+  }
+  function openPin() {
+    if (S.admin || !S.me || !peribadiBuka()) return;
+    S.pinBusy = false; S.pinBuang = false; pinError(''); renderPin();
+    pinReturn = document.activeElement;
+    $('#pinSheet').hidden = false;
+    var i = $('#pn-1'); if (i) i.focus({ preventScroll: true });
+  }
+  function closePin() {
+    $('#pinSheet').hidden = true; S.pinBusy = false; S.pinBuang = false; $('#pinBody').innerHTML = '';
+    if (pinReturn && document.body.contains(pinReturn)) pinReturn.focus();
+    pinReturn = null;
+  }
+  function pinSend(baru) {
+    S.pinBusy = true; pinError(''); renderPin();
+    call('tukarPinPeribadi', [auth(), baru], function (d) {
+      S.pinBusy = false;
+      applyData(d, ++S.seq);
+      if (baru) { S.gaji = baru; store.set(GAJI_KEY, JSON.stringify({ n: S.me, g: baru })); S.gajiErr = ''; }
+      else { S.gaji = ''; store.del(GAJI_KEY); S.gajiErr = ''; }
+      closePin(); render();
+      toast(baru ? 'PIN peribadi disimpan' : 'PIN peribadi dibuang. Buka semula dengan nombor gaji.');
+    }, function (e) {
+      S.pinBusy = false; S.pinBuang = false;
+      var c = codeOf(e);
+      if (isAuthCode(c)) { closePin(); handleAuth(c); return; }
+      if (isAksesCode(c)) { closePin(); handleAkses(c); return; }
+      renderPin(); pinError(message(c));
+    });
+  }
+  function pinSubmit() {
+    if (S.pinBusy) return;
+    var a = ($('#pn-1') || {}).value || '', b = ($('#pn-2') || {}).value || '';
+    a = a.trim(); b = b.trim();
+    if (!/^\d{4,8}$/.test(a)) { pinError(message('PIN_PERIBADI_TIDAK_SAH')); $('#pn-1').focus(); return; }
+    if (a !== b) { pinError('PIN yang dimasukkan semula tidak sama.'); $('#pn-2').focus(); return; }
+    pinSend(a);
+  }
+  function pinRemove() {
+    if (S.pinBusy) return;
+    if (!S.pinBuang) { S.pinBuang = true; renderPin(); var bt = document.querySelector('[data-act="pinRemove"]'); if (bt) bt.focus(); return; }
+    pinSend('');
+  }
+  function pinResetAdmin(name) {
+    if (!S.admin || S.pinBusy) return;
+    if (S.pinReset !== name) { S.pinReset = name; renderGaji(); var bt = document.querySelector('#gajiBody [data-act="pinReset"][data-val="' + CSS.escape(name) + '"]'); if (bt) bt.focus(); return; }
+    S.pinBusy = true; renderGaji();
+    call('resetPinPeribadi', [auth(), name], function (d) {
+      S.pinBusy = false; S.pinReset = '';
+      applyData(d, ++S.seq); renderGaji(); render();
+      toast('PIN peribadi ' + name + ' direset');
+    }, function (e) {
+      S.pinBusy = false; S.pinReset = ''; renderGaji();
+      var c = codeOf(e);
+      if (isAuthCode(c)) { closeGaji(); handleAuth(c); return; }
+      gajiError(message(c));
+    });
+  }
+
   // Penyelaras: tampal senarai nama dan nombor gaji (tidak disimpan; hanya kod tersulit).
   var gajiReturn = null;
   function gajiError(m) { var e = $('#gajiErr'); e.textContent = m; e.hidden = !m; }
@@ -1830,11 +1944,20 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
         (res.tidakSepadan.length ? '<br>Nama tidak sepadan dengan senarai staf: ' + esc(res.tidakSepadan.join('; ')) + '. Semak ejaan, kemudian tampal semula baris itu sahaja.' : '') +
         (res.tidakSah.length ? '<br>Baris tidak sah (tiada nombor gaji): ' + esc(res.tidakSah.join('; ')) + '.' : '') + '</div>';
     }
+    var pins = (ak.pin || []);
+    h += '<div class="field"><span class="lbl" style="font-weight:700">Reset PIN peribadi</span>' +
+      (pins.length ? '<span class="hint">Guru yang terlupa PIN peribadi: tekan Reset, dan guru itu kembali membuka data peribadi dengan nombor gaji.</span>' +
+        '<ul class="pinlist" style="list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px">' + pins.map(function (n) {
+          var c = S.pinReset === n;
+          return '<li style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><span class="grow" style="flex:1;min-width:160px">' + esc(n) + '</span>' +
+            '<button type="button" class="btn' + (c ? ' danger' : '') + '" data-act="pinReset" data-val="' + esc(n) + '"' + (S.pinBusy ? ' disabled' : '') + '>' + (c ? 'Tekan sekali lagi untuk reset' : 'Reset PIN') + '</button></li>';
+        }).join('') + '</ul>'
+      : '<span class="hint">Belum ada guru yang menetapkan PIN peribadi.</span>') + '</div>';
     $('#gajiBody').innerHTML = h;
   }
   function openGaji() {
     if (!S.admin) return;
-    S.gajiRes = null; gajiError(''); renderGaji();
+    S.gajiRes = null; S.pinReset = ''; gajiError(''); renderGaji();
     gajiReturn = document.activeElement;
     $('#gajiSheet').hidden = false;
     var ta = $('#gj-text'); if (ta) ta.focus({ preventScroll: true });
@@ -2014,7 +2137,8 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     var who = catWho(), per = S.catPeriod, r = perRange(per);
     var ak = S.admin ? S.aksesRingkas : null;
     var aksesBar = ak ? '<section class="panel"><div class="aksesbar"><span class="grow note" style="margin:0"><b>Akses nombor gaji:</b> ' + (ak.jumlah - ak.belum.length) + ' daripada ' + ak.jumlah + ' staf sudah didaftarkan.' +
-      (ak.belum.length ? ' Belum: ' + esc(ak.belum.slice(0, 6).join(', ')) + (ak.belum.length > 6 ? ' dan ' + (ak.belum.length - 6) + ' lagi' : '') + '.' : '') + '</span>' +
+      (ak.belum.length ? ' Belum: ' + esc(ak.belum.slice(0, 6).join(', ')) + (ak.belum.length > 6 ? ' dan ' + (ak.belum.length - 6) + ' lagi' : '') + '.' : '') +
+      (ak.pin && ak.pin.length ? ' ' + ak.pin.length + ' guru menggunakan PIN peribadi.' : '') + '</span>' +
       '<button type="button" class="btn" data-act="gajiAdmin">' + (ak.belum.length === ak.jumlah ? 'Daftar nombor gaji' : 'Kemas kini nombor gaji') + '</button></div></section>' : '';
     var canAdd = !!who && who !== 'ALL';
     var actions = '<div class="actions">' +
@@ -2033,15 +2157,15 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     else body = viewCatatanPerson(who, per, r);
     return '<div class="stack">' +
       heading('Aktiviti Individu', S.admin ? 'Sumbangan semua guru. Muat turun laporan untuk KJ. Guru hanya melihat catatan sendiri.' : 'Catat sumbangan anda setiap bulan. Laporan untuk KJ dijana automatik daripada catatan ini.', actions) +
-      aksesBar + (who ? '<section class="panel" style="padding-block:12px">' + nav + '</section>' : '') + body + '</div>';
+      pinLinkRow() + aksesBar + (who ? '<section class="panel" style="padding-block:12px">' + nav + '</section>' : '') + body + '</div>';
   }
   function myCatatanCard() {
     if (!S.me) return '';
     if (!peribadiBuka()) {
       var st = S.akses, cap = st === 'KUNCI' ? message('AKSES_KUNCI') : st === 'BELUM_DAFTAR' ? message('AKSES_BELUM_DAFTAR')
-        : 'Aktiviti Individu' + (bakiAktif() ? ' dan Baki Cuti' : '') + ' dibuka dengan nombor gaji anda.';
+        : 'Aktiviti Individu' + (bakiAktif() ? ' dan Baki Cuti' : '') + ' dibuka dengan ' + (S.pinPeribadi ? 'PIN peribadi' : 'nombor gaji') + ' anda.';
       return '<section class="panel leavecard"><h2>Data peribadi dikunci</h2><div class="lc-row"><span class="lc-cap">' + esc(cap) + '</span>' +
-        (st === 'KUNCI' || st === 'BELUM_DAFTAR' ? '' : '<button type="button" class="btn" data-act="go" data-page="catatan">Masukkan nombor gaji</button>') + '</div></section>';
+        (st === 'KUNCI' || st === 'BELUM_DAFTAR' ? '' : '<button type="button" class="btn" data-act="go" data-page="catatan">' + (S.pinPeribadi ? 'Masukkan PIN' : 'Masukkan nombor gaji') + '</button>') + '</div></section>';
     }
     var per = todayISO().slice(0, 7), s = catSummary(S.me, per), n = s.ctn.length, m = s.pgl.length;
     var last = new Date(Number(per.slice(0, 4)), Number(per.slice(5, 7)), 0).getDate();
@@ -2838,22 +2962,51 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     if (r.category === 'TIME_OFF') return timeRange(r.from, r.to);
     return (r.activity || r.sub) + (r.place ? ', ' + r.place : '');
   }
+  // Julat tarikh ringkas untuk rekod lebih daripada sehari: [24-26 Nov], [28 Nov-2 Dis], [30 Dis 2026-2 Jan 2027].
+  var MON_SHORT = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogos', 'Sep', 'Okt', 'Nov', 'Dis'];
+  function shareRange(r) {
+    if (r.category === 'TIME_OFF' || !ISO.test(r.start || '') || !ISO.test(r.end || '') || r.end <= r.start) return '';
+    var a = r.start.split('-').map(Number), b = r.end.split('-').map(Number);
+    var right = b[2] + ' ' + MON_SHORT[b[1] - 1];
+    if (a[0] !== b[0]) return '[' + a[2] + ' ' + MON_SHORT[a[1] - 1] + ' ' + a[0] + '-' + right + ' ' + b[0] + ']';
+    if (a[1] !== b[1]) return '[' + a[2] + ' ' + MON_SHORT[a[1] - 1] + '-' + right + ']';
+    return '[' + a[2] + '-' + right + ']';
+  }
+  // Gabungkan rekod berturut-turut (orang, kategori dan jenis yang sama) supaya cuti yang diisi
+  // satu rekod sehari tetap dipapar sebagai julat, contohnya [24-26 Nov]. Hujung minggu dan cuti umum di antara dilangkau.
+  function shareRun(r) {
+    if (r.category === 'TIME_OFF' || !ISO.test(r.start || '') || !ISO.test(r.end || '')) return r;
+    var mine = S.rows.filter(function (x) { return x.name === r.name && x.category === r.category && (x.sub || '') === (r.sub || '') && ISO.test(x.start || '') && ISO.test(x.end || ''); });
+    function covered(d) { for (var i = 0; i < mine.length; i++) if (mine[i].start <= d && mine[i].end >= d) return mine[i]; return null; }
+    var start = r.start, end = r.end, guard = 0, d, x;
+    while (guard++ < 400) {
+      d = addDays(start, -1); while (isOffDay(d) && guard++ < 400) d = addDays(d, -1);
+      x = covered(d); if (!x) break; start = x.start < d ? x.start : d;
+    }
+    guard = 0;
+    while (guard++ < 400) {
+      d = addDays(end, 1); while (isOffDay(d) && guard++ < 400) d = addDays(d, 1);
+      x = covered(d); if (!x) break; end = x.end > d ? x.end : d;
+    }
+    return start === r.start && end === r.end ? r : { category: r.category, start: start, end: end };
+  }
   function dailySummary(date) {
     var day = S.rows.filter(function (r) { return sameDay(r, date); }).sort(byStart);
     var lines = ['*Keberadaan Staf JSS*', 'Tarikh: ' + longDate(date)];
     if (isOffDay(date)) lines.push(HOL[date] ? HOL[date].type + ': ' + HOL[date].name : 'Hari minggu');
     [['CUTI', 'Cuti'], ['TUGAS_RASMI', 'Tugas rasmi'], ['TIME_OFF', 'Time off']].forEach(function (c) {
-      var people = [], details = {};
+      var people = [], details = {}, ranges = {};
       day.forEach(function (r) {
         if (r.category !== c[0]) return;
-        if (!details[r.name]) { details[r.name] = []; people.push(r.name); }
-        var d = shareDetail(r);
+        if (!details[r.name]) { details[r.name] = []; ranges[r.name] = []; people.push(r.name); }
+        var d = shareDetail(r), g = shareRange(shareRun(r));
         if (d && details[r.name].indexOf(d) < 0) details[r.name].push(d);
+        if (g && ranges[r.name].indexOf(g) < 0) ranges[r.name].push(g);
       });
       lines.push('');
       lines.push('*' + c[1] + ': ' + people.length + ' pensyarah*');
       people.forEach(function (n, i) {
-        lines.push((i + 1) + '. ' + n + (details[n].length ? ' (' + details[n].join('; ') + ')' : ''));
+        lines.push((i + 1) + '. ' + n + (details[n].length ? ' (' + details[n].join('; ') + ')' : '') + (ranges[n].length ? ' ' + ranges[n].join(' ') : ''));
       });
     });
     return lines.join('\n');
@@ -3484,8 +3637,13 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
   var shareReturn = null;
   var OK_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   var WA_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.6a8.4 8.4 0 0 1-12.4 7.4L3.5 20.5l1.5-4.4a8.4 8.4 0 1 1 15.5-4.5z"/></svg>';
+  function withAppLink(text) {
+    var link = (typeof JEJAK_LINK === 'string' ? JEJAK_LINK : '').trim();
+    if (!link || String(text).indexOf(link) >= 0) return text;
+    return String(text).replace(/\s+$/, '') + '\n\nBuka JEJAK JSS: ' + link;
+  }
   function setShareDate(date) {
-    var text = dailySummary(date);
+    var text = dailySummary(date); // ringkasan keberadaan: tanpa pautan app
     S.shareText = text; S.shareDate = date;
     $('#shareSub').textContent = (S.shareSaved ? 'Kongsi keberadaan staf pada ' : 'Ringkasan keberadaan staf pada ') + longDate(date) + (S.shareSaved ? ' ke group WhatsApp jabatan.' : '.');
     $('#shareText').textContent = text;
@@ -3505,6 +3663,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     $('#shareWa').focus();
   }
   function openShareText(title, sub, text) {
+    text = withAppLink(text);
     S.shareText = text;
     $('#shareTitle').textContent = title;
     $('#shareMark').className = 'okmark share'; $('#shareMark').innerHTML = WA_SVG;
@@ -3546,6 +3705,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     else if (ev.target.id === 'catForm') catSave();
     else if (ev.target.id === 'gajiGate') gajiSubmit();
     else if (ev.target.id === 'gajiForm') gajiAdminSubmit();
+    else if (ev.target.id === 'pinForm') pinSubmit();
     else if (ev.target.id === 'tgForm') tgSave();
   });
 
@@ -3695,6 +3855,10 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
         S.cf.type = val; S.cf.roles = []; S.cf.roleOther = ''; S.cf.roleOn = !(ROLE_OPTS[val] || []).length; S.cf.result = '';
         renderCat(k); break;
       case 'gajiAdmin': openGaji(); break;
+      case 'openPin': openPin(); break;
+      case 'closePin': closePin(); break;
+      case 'pinRemove': pinRemove(); break;
+      case 'pinReset': pinResetAdmin(val); break;
       case 'tgFilter': S.tgFilter = val; S.tgConfirm = null; renderKeep(k); break;
       case 'tgMineOnly': S.tgMineOnly = !S.tgMineOnly; renderKeep(k); break;
       case 'tgOpen': S.tgOpen[id] = !S.tgOpen[id]; if (!S.tgOpen[id] && S.tgConfirm === id) S.tgConfirm = null; renderKeep(k); break;
@@ -3906,6 +4070,7 @@ input[type=password],input[type=number]{background:var(--white);border:1px solid
     if (!$('#catSheet').hidden) closeCat();
     if (!$('#gajiSheet').hidden) closeGaji();
     if (!$('#tgSheet').hidden) closeTg();
+    if (!$('#pinSheet').hidden) closePin();
   });
   window.addEventListener('afterprint', function () { document.body.classList.remove('printing-report'); document.title = 'JEJAK JSS'; });
 
